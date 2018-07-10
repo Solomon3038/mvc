@@ -2,14 +2,19 @@ package com.solomon.mvc.controller;
 
 import com.solomon.mvc.entity.ToDo;
 import com.solomon.mvc.service.TodoCrudService;
+import com.solomon.mvc.service.exception.BadRequestException;
+import com.solomon.mvc.service.exception.InternalServerErrorException;
+import org.springframework.context.MessageSource;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestController
 @RequestMapping("/todo")
@@ -17,8 +22,11 @@ public class TodoController {
 
     private final TodoCrudService service;
 
-    public TodoController(TodoCrudService service) {
+    private final MessageSource messageSource;
+
+    public TodoController(TodoCrudService service, MessageSource messageSource) {
         this.service = Objects.requireNonNull(service);
+        this.messageSource = Objects.requireNonNull(messageSource);
     }
 
     @GetMapping
@@ -30,7 +38,7 @@ public class TodoController {
     }
 
     @GetMapping("/{id}")
-    public ToDo toDo(@PathVariable("id")UUID id) {
+    public ToDo toDo(@PathVariable("id") UUID id) {
         return service.findOne(id).orElseThrow(RuntimeException::new);
     }
 
@@ -49,9 +57,16 @@ public class TodoController {
         service.delete(id);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void notFoundHandler(RuntimeException ex) {
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(BAD_REQUEST)
+    public String handleBadRequest(BadRequestException ex, HttpServletRequest req) {
+       return  messageSource.getMessage(ex.getMessageCode(), ex.getArgs(), req.getLocale());
+
+    }
+    @ExceptionHandler(InternalServerErrorException.class)
+    @ResponseStatus(BAD_REQUEST)
+    public String handleBadRequest(InternalServerErrorException ex, HttpServletRequest req) {
+        return  messageSource.getMessage(ex.getMessageCode(), ex.getArgs(), req.getLocale());
 
     }
 }

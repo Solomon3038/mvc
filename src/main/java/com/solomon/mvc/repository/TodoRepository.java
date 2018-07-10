@@ -13,4 +13,5 @@ public interface TodoRepository extends JpaRepository<ToDo, UUID> {
 
     @Query("select td from ToDo td where td.plannedTime between :from and :to")
     List<ToDo> findAllByDate(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
 }
